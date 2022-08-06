@@ -1,40 +1,49 @@
-import { times, range } from "lodash/fp"
+import { times, range } from 'lodash/fp';
+
+// Logic
 
 export const TILE_STATUSES = {
-  HIDDEN: "hidden",
-  MINE: "mine",
-  NUMBER: "number",
-  MARKED: "marked",
-}
+  HIDDEN: 'hidden',
+  MINE: 'mine',
+  NUMBER: 'number',
+  MARKED: 'marked',
+};
 
 export function createBoard(boardSize, minePositions) {
-  return times(x => {
-    return times(y => {
-      return {
-        x,
-        y,
-        mine: minePositions.some(positionMatch.bind(null, { x, y })),
-        status: TILE_STATUSES.HIDDEN,
-      }
-    }, boardSize)
-  }, boardSize)
+  return times(
+    (x) =>
+      times(
+        (y) => ({
+          x,
+          y,
+          status: TILE_STATUSES.HIDDEN,
+          mine: minePositions.some(positionMatch.bind(null, { x, y })),
+        }),
+        boardSize
+      ),
+    boardSize
+  );
 }
 
-export function markedTilesCount(board) {
-  return board.reduce((count, row) => {
-    return (
-      count + row.filter(tile => tile.status === TILE_STATUSES.MARKED).length
-    )
-  }, 0)
+function replaceTile(board, position, newTile) {
+  return board.map((row, x) =>
+    row.map((tile, y) => {
+      if (positionMatch(position, { x, y })) {
+        return newTile;
+      }
+      return { ...tile };
+    })
+  );
 }
 
 export function markTile(board, { x, y }) {
-  const tile = board[x][y]
+  const tile = board[x][y];
+
   if (
     tile.status !== TILE_STATUSES.HIDDEN &&
     tile.status !== TILE_STATUSES.MARKED
   ) {
-    return board
+    return board;
   }
 
   if (tile.status === TILE_STATUSES.MARKED) {
@@ -42,85 +51,83 @@ export function markTile(board, { x, y }) {
       board,
       { x, y },
       { ...tile, status: TILE_STATUSES.HIDDEN }
-    )
-  } else {
-    return replaceTile(
-      board,
-      { x, y },
-      { ...tile, status: TILE_STATUSES.MARKED }
-    )
+    );
   }
-}
 
-function replaceTile(board, position, newTile) {
-  return board.map((row, x) => {
-    return row.map((tile, y) => {
-      if (positionMatch(position, { x, y })) {
-        return newTile
-      }
-      return tile
-    })
-  })
+  return replaceTile(
+    board,
+    { x, y },
+    { ...tile, status: TILE_STATUSES.MARKED }
+  );
 }
 
 export function revealTile(board, { x, y }) {
-  const tile = board[x][y]
+  const tile = board[x][y];
+
   if (tile.status !== TILE_STATUSES.HIDDEN) {
-    return board
+    return board;
   }
 
   if (tile.mine) {
-    return replaceTile(board, { x, y }, { ...tile, status: TILE_STATUSES.MINE })
+    return replaceTile(
+      board,
+      { x, y },
+      { ...tile, status: TILE_STATUSES.MINE }
+    );
   }
 
-  const adjacentTiles = nearbyTiles(board, tile)
-  const mines = adjacentTiles.filter(t => t.mine)
+  const adjacentTiles = nearbyTiles(board, tile);
+  const mines = adjacentTiles.filter((t) => t.mine);
+
   const newBoard = replaceTile(
     board,
     { x, y },
     { ...tile, status: TILE_STATUSES.NUMBER, adjacentMinesCount: mines.length }
-  )
+  );
+
   if (mines.length === 0) {
-    return adjacentTiles.reduce((b, t) => {
-      return revealTile(b, t)
-    }, newBoard)
+    return adjacentTiles.reduce((brd, tl) => revealTile(brd, tl), newBoard);
   }
-  return newBoard
+
+  return newBoard;
+}
+
+export function markedTiles(board) {
+  return board.reduce(
+    (count, row) =>
+      count + row.filter((tile) => tile.status === TILE_STATUSES.MARKED).length,
+    0
+  );
 }
 
 export function checkWin(board) {
-  return board.every(row => {
-    return row.every(tile => {
-      return (
+  return board.every((row) =>
+    row.every(
+      (tile) =>
         tile.status === TILE_STATUSES.NUMBER ||
         (tile.mine &&
           (tile.status === TILE_STATUSES.HIDDEN ||
             tile.status === TILE_STATUSES.MARKED))
-      )
-    })
-  })
+    )
+  );
 }
 
 export function checkLose(board) {
-  return board.some(row => {
-    return row.some(tile => {
-      return tile.status === TILE_STATUSES.MINE
-    })
-  })
+  return board.some((row) =>
+    row.some((tile) => tile.status === TILE_STATUSES.MINE)
+  );
 }
 
 export function positionMatch(a, b) {
-  return a.x === b.x && a.y === b.y
+  return a.x === b.x && a.y === b.y;
 }
 
 function nearbyTiles(board, { x, y }) {
-  const offsets = range(-1, 2)
+  const offsets = range(-1, 2);
 
   return offsets
-    .flatMap(xOffset => {
-      return offsets.map(yOffset => {
-        return board[x + xOffset]?.[y + yOffset]
-      })
-    })
-    .filter(tile => tile != null)
+    .flatMap((xOffset) =>
+      offsets.map((yOffset) => board[x + xOffset]?.[y + yOffset])
+    )
+    .filter((tile) => tile != null);
 }

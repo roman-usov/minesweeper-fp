@@ -1,6 +1,6 @@
 {
-  "extends": ["airbnb", "prettier", "plugin:node/recommended"],
-  "plugins": ["prettier", "jest"],
+  "extends": ["airbnb", "prettier", "plugin:cypress/recommended"],
+  "plugins": ["prettier", "jest", "cypress"],
   "rules": {
     "prettier/prettier": "error",
     "no-unused-vars": "warn",
@@ -12,11 +12,16 @@
     "jest/no-focused-tests": "error",
     "jest/no-identical-title": "error",
     "jest/prefer-to-have-length": "warn",
-    "jest/valid-expect": "error"
+    "jest/valid-expect": "error",
+    "no-use-before-define": "off"
   },
   "env": {
     "browser": true,
     "node": true,
     "jest/globals": true
+  },
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2020
   }
 }
