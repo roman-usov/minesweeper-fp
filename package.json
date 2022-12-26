@@ -2,7 +2,6 @@
   "name": "Minesweeper",
   "version": "1.0.0",
   "description": "Minesweeper",
-  "main": "src/script.js",
   "scripts": {
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "start": "parcel index.html",
